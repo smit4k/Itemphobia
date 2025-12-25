@@ -1,16 +1,15 @@
 package codes.smit.gui;
 
-import codes.smit.Itemphobia;
 import codes.smit.config.ItemphobiaConfig;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
-import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,8 +17,9 @@ import java.util.List;
 public class BlacklistScreen extends Screen {
 
     private EditBox searchBox;
-    private List<Item> filteredItems = new ArrayList<>();
+    private final List<Item> filteredItems = new ArrayList<>();
     private List<ResourceLocation> blacklistedItems = new ArrayList<>();
+
     private int scrollOffset = 0;
     private static final int ITEMS_PER_PAGE = 10;
 
@@ -27,32 +27,43 @@ public class BlacklistScreen extends Screen {
         super(Component.literal("Itemphobia - Blacklist Manager"));
     }
 
+    /* ------------------------------------------------------------
+       Disable blur / dim (1.21.x compatible)
+       ------------------------------------------------------------ */
+    @Override
+    public void renderBackground(GuiGraphics graphics, int mouseX, int mouseY, float delta) {
+        // Intentionally empty — NO blur, NO dark overlay
+    }
+
     @Override
     protected void init() {
         super.init();
 
-        // Search box
-        searchBox = new EditBox(this.font, this.width / 2 - 150, 40, 300, 20, Component.literal("Search items..."));
+        searchBox = new EditBox(
+                this.font,
+                this.width / 2 - 150,
+                40,
+                300,
+                20,
+                Component.literal("Search items...")
+        );
         searchBox.setHint(Component.literal("Search for items..."));
         searchBox.setResponder(this::onSearchChanged);
         this.addRenderableWidget(searchBox);
 
-        // Load blacklisted items
         blacklistedItems = new ArrayList<>(ItemphobiaConfig.getBlacklistedItems());
-
-        // Initialize with all items
         updateFilteredItems("");
 
-        // Close button
-        this.addRenderableWidget(Button.builder(
-                Component.literal("Done"),
-                button -> this.onClose()
-        ).bounds(this.width / 2 - 50, this.height - 30, 100, 20).build());
+        this.addRenderableWidget(
+                Button.builder(Component.literal("Done"), b -> onClose())
+                        .bounds(this.width / 2 - 50, this.height - 30, 100, 20)
+                        .build()
+        );
     }
 
     private void onSearchChanged(String search) {
-        updateFilteredItems(search);
         scrollOffset = 0;
+        updateFilteredItems(search);
     }
 
     private void updateFilteredItems(String search) {
@@ -61,142 +72,146 @@ public class BlacklistScreen extends Screen {
 
         for (Item item : BuiltInRegistries.ITEM) {
             ResourceLocation id = BuiltInRegistries.ITEM.getKey(item);
-            if (id.toString().toLowerCase().contains(searchLower)) {
+            if (id != null && id.toString().toLowerCase().contains(searchLower)) {
                 filteredItems.add(item);
             }
         }
     }
 
     @Override
-    public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
-        graphics.fill(0, 0, this.width, this.height, 0xC0101010);
+    public void render(GuiGraphics graphics, int mouseX, int mouseY, float delta) {
+        // Solid background (optional but clean)
+        graphics.fill(0, 0, width, height, 0xFF121212);
 
-        // Title
-        graphics.drawCenteredString(this.font, "Itemphobia - Blacklist Manager", this.width / 2, 15, 0xFFFFFF);
+        graphics.drawCenteredString(
+                font,
+                Component.literal("Itemphobia - Blacklist Manager"),
+                width / 2,
+                15,
+                0xFFFFFFFF
+        );
 
-        // Section headers
-        graphics.drawString(this.font, "Available Items:", 20, 70, 0xFFFFFF);
-        graphics.drawString(this.font, "Blacklisted Items:", this.width / 2 + 10, 70, 0xFF5555);
+        graphics.drawString(
+                font,
+                Component.literal("Available Items:"),
+                20,
+                70,
+                0xFFFFFFFF,
+                false
+        );
 
-        // Render available items (left side)
+        graphics.drawString(
+                font,
+                Component.literal("Blacklisted Items:"),
+                width / 2 + 10,
+                70,
+                0xFFFF5555,
+                false
+        );
+
         renderAvailableItems(graphics, mouseX, mouseY);
-
-        // Render blacklisted items (right side)
         renderBlacklistedItems(graphics, mouseX, mouseY);
 
-        super.render(graphics, mouseX, mouseY, partialTick);
+        super.render(graphics, mouseX, mouseY, delta);
     }
 
     private void renderAvailableItems(GuiGraphics graphics, int mouseX, int mouseY) {
         int startY = 90;
         int x = 20;
-        int displayCount = Math.min(ITEMS_PER_PAGE, filteredItems.size() - scrollOffset);
 
-        for (int i = 0; i < displayCount; i++) {
-            int index = i + scrollOffset;
-            if (index >= filteredItems.size()) break;
-
-            Item item = filteredItems.get(index);
+        int max = Math.min(ITEMS_PER_PAGE, filteredItems.size() - scrollOffset);
+        for (int i = 0; i < max; i++) {
+            Item item = filteredItems.get(i + scrollOffset);
             ResourceLocation id = BuiltInRegistries.ITEM.getKey(item);
-            int y = startY + (i * 25);
+            int y = startY + i * 25;
 
-            // Render item icon
             graphics.renderItem(item.getDefaultInstance(), x, y);
 
-            // Item name next to icon
-            String itemName = id.getPath();
-            graphics.drawString(this.font, itemName, x + 20, y + 5, 0xFFFFFF);
+            graphics.drawString(
+                    font,
+                    Component.literal(id.getPath()),
+                    x + 20,
+                    y + 5,
+                    0xFFFFFFFF,
+                    false
+            );
 
-            // Add button (+)
-            int buttonX = this.width / 2 - 50;
-            int buttonY = y;
-            boolean isHovered = mouseX >= buttonX && mouseX <= buttonX + 20 &&
-                    mouseY >= buttonY && mouseY <= buttonY + 20;
+            int bx = width / 2 - 50;
+            boolean hover = mouseX >= bx && mouseX <= bx + 20 && mouseY >= y && mouseY <= y + 20;
 
-            graphics.fill(buttonX, buttonY, buttonX + 20, buttonY + 20, isHovered ? 0xFF44FF44 : 0xFF00AA00);
-            graphics.drawCenteredString(this.font, "+", buttonX + 10, buttonY + 6, 0xFFFFFF);
-        }
-
-        // Scroll info
-        if (filteredItems.size() > ITEMS_PER_PAGE) {
-            graphics.drawString(this.font,
-                    String.format("Showing %d-%d of %d",
-                            scrollOffset + 1,
-                            Math.min(scrollOffset + ITEMS_PER_PAGE, filteredItems.size()),
-                            filteredItems.size()),
-                    x, startY + (ITEMS_PER_PAGE * 25) + 10, 0xAAAAAA);
+            graphics.fill(bx, y, bx + 20, y + 20, hover ? 0xFF44FF44 : 0xFF00AA00);
+            graphics.drawCenteredString(font, Component.literal("+"), bx + 10, y + 6, 0xFFFFFFFF);
         }
     }
 
     private void renderBlacklistedItems(GuiGraphics graphics, int mouseX, int mouseY) {
         int startY = 90;
-        int x = this.width / 2 + 10;
+        int x = width / 2 + 10;
+
+        if (blacklistedItems.isEmpty()) {
+            graphics.drawString(
+                    font,
+                    Component.literal("No items blacklisted"),
+                    x,
+                    startY,
+                    0xFF888888,
+                    false
+            );
+            return;
+        }
 
         for (int i = 0; i < Math.min(blacklistedItems.size(), ITEMS_PER_PAGE); i++) {
             ResourceLocation id = blacklistedItems.get(i);
-            int y = startY + (i * 25);
+            Item item = BuiltInRegistries.ITEM.getOptional(id).orElse(Items.AIR);
+            int y = startY + i * 25;
 
-            // Render item icon
-            Item item = BuiltInRegistries.ITEM.get(id).map(holder -> holder.value()).orElse(Items.AIR);
             graphics.renderItem(item.getDefaultInstance(), x, y);
 
-            // Item name next to icon
-            String itemName = id.getPath();
-            graphics.drawString(this.font, itemName, x + 20, y + 5, 0xFFFFFF);
+            graphics.drawString(
+                    font,
+                    Component.literal(id.getPath()),
+                    x + 20,
+                    y + 5,
+                    0xFFFFFFFF,
+                    false
+            );
 
-            // Remove button (-)
-            int buttonX = this.width - 50;
-            int buttonY = y;
-            boolean isHovered = mouseX >= buttonX && mouseX <= buttonX + 20 &&
-                    mouseY >= buttonY && mouseY <= buttonY + 20;
+            int bx = width - 50;
+            boolean hover = mouseX >= bx && mouseX <= bx + 20 && mouseY >= y && mouseY <= y + 20;
 
-            graphics.fill(buttonX, buttonY, buttonX + 20, buttonY + 20, isHovered ? 0xFFFF4444 : 0xFFAA0000);
-            graphics.drawCenteredString(this.font, "-", buttonX + 10, buttonY + 6, 0xFFFFFF);
-        }
-
-        if (blacklistedItems.isEmpty()) {
-            graphics.drawString(this.font, "No items blacklisted", x, startY, 0x888888);
+            graphics.fill(bx, y, bx + 20, y + 20, hover ? 0xFFFF4444 : 0xFFAA0000);
+            graphics.drawCenteredString(font, Component.literal("-"), bx + 10, y + 6, 0xFFFFFFFF);
         }
     }
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (button == 0) { // Left click
-            // Check available items add buttons
-            int startY = 90;
-            int displayCount = Math.min(ITEMS_PER_PAGE, filteredItems.size() - scrollOffset);
+        if (button != 0) return super.mouseClicked(mouseX, mouseY, button);
 
-            for (int i = 0; i < displayCount; i++) {
-                int index = i + scrollOffset;
-                if (index >= filteredItems.size()) break;
+        int startY = 90;
 
-                int y = startY + (i * 25);
-                int buttonX = this.width / 2 - 50;
-                int buttonY = y;
+        for (int i = 0; i < Math.min(ITEMS_PER_PAGE, filteredItems.size() - scrollOffset); i++) {
+            int y = startY + i * 25;
+            int bx = width / 2 - 50;
 
-                if (mouseX >= buttonX && mouseX <= buttonX + 20 &&
-                        mouseY >= buttonY && mouseY <= buttonY + 20) {
-                    Item item = filteredItems.get(index);
-                    ItemphobiaConfig.addToBlacklist(item);
-                    blacklistedItems = new ArrayList<>(ItemphobiaConfig.getBlacklistedItems());
-                    return true;
-                }
+            if (mouseX >= bx && mouseX <= bx + 20 && mouseY >= y && mouseY <= y + 20) {
+                Item item = filteredItems.get(i + scrollOffset);
+                ItemphobiaConfig.addToBlacklist(item);
+                blacklistedItems = new ArrayList<>(ItemphobiaConfig.getBlacklistedItems());
+                return true;
             }
+        }
 
-            // Check blacklisted items remove buttons
-            for (int i = 0; i < Math.min(blacklistedItems.size(), ITEMS_PER_PAGE); i++) {
-                int y = startY + (i * 25);
-                int buttonX = this.width - 50;
-                int buttonY = y;
+        for (int i = 0; i < Math.min(blacklistedItems.size(), ITEMS_PER_PAGE); i++) {
+            int y = startY + i * 25;
+            int bx = width - 50;
 
-                if (mouseX >= buttonX && mouseX <= buttonX + 20 &&
-                        mouseY >= buttonY && mouseY <= buttonY + 20) {
-                    ResourceLocation id = blacklistedItems.get(i);
-                    Item item = BuiltInRegistries.ITEM.get(id).map(holder -> holder.value()).orElse(Items.AIR);
-                    ItemphobiaConfig.removeFromBlacklist(item);
-                    blacklistedItems = new ArrayList<>(ItemphobiaConfig.getBlacklistedItems());
-                    return true;
-                }
+            if (mouseX >= bx && mouseX <= bx + 20 && mouseY >= y && mouseY <= y + 20) {
+                ResourceLocation id = blacklistedItems.get(i);
+                BuiltInRegistries.ITEM.getOptional(id)
+                        .ifPresent(ItemphobiaConfig::removeFromBlacklist);
+                blacklistedItems = new ArrayList<>(ItemphobiaConfig.getBlacklistedItems());
+                return true;
             }
         }
 
@@ -205,11 +220,11 @@ public class BlacklistScreen extends Screen {
 
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
-        // Scroll through available items list
         if (scrollY > 0 && scrollOffset > 0) {
             scrollOffset--;
             return true;
-        } else if (scrollY < 0 && scrollOffset < filteredItems.size() - ITEMS_PER_PAGE) {
+        }
+        if (scrollY < 0 && scrollOffset < filteredItems.size() - ITEMS_PER_PAGE) {
             scrollOffset++;
             return true;
         }
