@@ -1,0 +1,14 @@
+{
+	"required": true,
+	"package": "codes.smit.mixin",
+	"compatibilityLevel": "JAVA_21",
+	"mixins": [
+		"ItemPickupMixin"
+	],
+	"client": [
+		"ClientTickMixin"
+	],
+	"injectors": {
+		"defaultRequire": 1
+	}
+}
