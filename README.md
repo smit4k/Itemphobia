@@ -1,5 +1,5 @@
 # Itemphobia
-Itemphobia is a Fabric Minecraft mod that allows you to blacklist items that you do not want in your inventory.
+Itemphobia is a Fabric Minecraft mod that allows you to blacklist items that you do not want to pick up from the ground
 
 ## Installation
 The latest stable release of Itemphobia can be downloaded from the Github [releases](https://github.com/smit4k/Itemphobia/releases) page.
