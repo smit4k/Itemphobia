@@ -1,5 +1,6 @@
 package codes.smit.gui;
 
+import codes.smit.Itemphobia;
 import codes.smit.config.ItemphobiaConfig;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
@@ -56,7 +57,7 @@ public class BlacklistScreen extends Screen {
 
     private void updateFilteredItems(String search) {
         filteredItems.clear();
-        String searchLower = search.toLowerCase();
+        String searchLower = search.toLowerCase().replace(" ", "_");
 
         for (Item item : BuiltInRegistries.ITEM) {
             ResourceLocation id = BuiltInRegistries.ITEM.getKey(item);
