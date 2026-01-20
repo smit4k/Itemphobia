@@ -5,7 +5,7 @@ Itemphobia is a Fabric Minecraft mod that allows you to blacklist items that you
 The latest stable release of Itemphobia can be downloaded from the Github [releases](https://github.com/smit4k/Itemphobia/releases) page.
 
 ## Usage
-Press `I` when in a world to open up the Itemphobia blacklist GUI.
+Press `I` (keybind can be changed) when in a world to open up the Itemphobia blacklist GUI.
 
 ### Blacklisting items
 In the blacklist GUI, you can search for items to blacklist at the top. To blacklist an item, click the green `+` button next to the item's icon. You will now see that item move to the blacklisted items section on the right side. Press **Done** to confirm your selection. That item will now no longer be able to be picked up from the ground.
