@@ -6,7 +6,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import net.minecraft.world.item.Item;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 import java.io.File;
 import java.io.FileReader;
@@ -21,7 +21,7 @@ import java.util.Set;
 public class ItemphobiaConfig {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private static final File CONFIG_FILE = new File("config/itemphobia.json");
-    private static final Set<ResourceLocation> blacklistedItems = new HashSet<>();
+    private static final Set<Identifier> blacklistedItems = new HashSet<>();
 
     public static void load() {
         if (!CONFIG_FILE.exists()) {
@@ -37,7 +37,7 @@ public class ItemphobiaConfig {
             blacklistedItems.clear();
             if (itemIds != null) {
                 for (String id : itemIds) {
-                    blacklistedItems.add(ResourceLocation.parse(id));
+                    blacklistedItems.add(Identifier.parse(id));
                 }
             }
 
@@ -51,7 +51,7 @@ public class ItemphobiaConfig {
         CONFIG_FILE.getParentFile().mkdirs();
 
         List<String> itemIds = new ArrayList<>();
-        for (ResourceLocation id : blacklistedItems) {
+        for (Identifier id : blacklistedItems) {
             itemIds.add(id.toString());
         }
 
@@ -64,25 +64,25 @@ public class ItemphobiaConfig {
     }
 
     public static boolean isBlacklisted(Item item) {
-        ResourceLocation id = BuiltInRegistries.ITEM.getKey(item);
+        Identifier id = BuiltInRegistries.ITEM.getKey(item);
         return blacklistedItems.contains(id);
     }
 
     public static void addToBlacklist(Item item) {
-        ResourceLocation id = BuiltInRegistries.ITEM.getKey(item);
+        Identifier id = BuiltInRegistries.ITEM.getKey(item);
         if (blacklistedItems.add(id)) {
             save();
         }
     }
 
     public static void removeFromBlacklist(Item item) {
-        ResourceLocation id = BuiltInRegistries.ITEM.getKey(item);
+        Identifier id = BuiltInRegistries.ITEM.getKey(item);
         if (blacklistedItems.remove(id)) {
             save();
         }
     }
 
-    public static Set<ResourceLocation> getBlacklistedItems() {
+    public static Set<Identifier> getBlacklistedItems() {
         return new HashSet<>(blacklistedItems);
     }
 }

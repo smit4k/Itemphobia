@@ -6,11 +6,14 @@ import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
+import net.minecraft.resources.Identifier;
 import org.lwjgl.glfw.GLFW;
 
 public class ItemphobiaClient implements ClientModInitializer {
 
 	public static KeyMapping openGuiKey;
+	private static final KeyMapping.Category ITEMPHOBIA_CATEGORY = 
+			KeyMapping.Category.register(Identifier.parse("itemphobia:category"));
 
 	@Override
 	public void onInitializeClient() {
@@ -18,7 +21,7 @@ public class ItemphobiaClient implements ClientModInitializer {
 				"key.itemphobia.open_gui",
 				InputConstants.Type.KEYSYM,
 				GLFW.GLFW_KEY_I,
-				"category.itemphobia"
+				ITEMPHOBIA_CATEGORY
 		));
 
 		Itemphobia.LOGGER.info("Itemphobia client initialized!");

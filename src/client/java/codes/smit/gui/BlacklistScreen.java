@@ -5,9 +5,10 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
 
@@ -18,7 +19,7 @@ public class BlacklistScreen extends Screen {
 
     private EditBox searchBox;
     private final List<Item> filteredItems = new ArrayList<>();
-    private List<ResourceLocation> blacklistedItems = new ArrayList<>();
+    private List<Identifier> blacklistedItems = new ArrayList<>();
 
     private int scrollOffset = 0;
     private static final int ITEMS_PER_PAGE = 10;
@@ -71,7 +72,7 @@ public class BlacklistScreen extends Screen {
         String searchLower = search.toLowerCase().replace(" ", "_");
 
         for (Item item : BuiltInRegistries.ITEM) {
-            ResourceLocation id = BuiltInRegistries.ITEM.getKey(item);
+            Identifier id = BuiltInRegistries.ITEM.getKey(item);
             if (id != null && id.toString().toLowerCase().contains(searchLower)) {
                 filteredItems.add(item);
             }
@@ -122,7 +123,7 @@ public class BlacklistScreen extends Screen {
         int max = Math.min(ITEMS_PER_PAGE, filteredItems.size() - scrollOffset);
         for (int i = 0; i < max; i++) {
             Item item = filteredItems.get(i + scrollOffset);
-            ResourceLocation id = BuiltInRegistries.ITEM.getKey(item);
+            Identifier id = BuiltInRegistries.ITEM.getKey(item);
             int y = startY + i * 25;
 
             graphics.renderItem(item.getDefaultInstance(), x, y);
@@ -161,7 +162,7 @@ public class BlacklistScreen extends Screen {
         }
 
         for (int i = 0; i < Math.min(blacklistedItems.size(), ITEMS_PER_PAGE); i++) {
-            ResourceLocation id = blacklistedItems.get(i);
+            Identifier id = blacklistedItems.get(i);
             Item item = BuiltInRegistries.ITEM.getOptional(id).orElse(Items.AIR);
             int y = startY + i * 25;
 
@@ -185,8 +186,12 @@ public class BlacklistScreen extends Screen {
     }
 
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (button != 0) return super.mouseClicked(mouseX, mouseY, button);
+    public boolean mouseClicked(MouseButtonEvent event, boolean propagate) {
+        double mouseX = event.x();
+        double mouseY = event.y();
+        int button = event.button();
+        
+        if (button != 0) return super.mouseClicked(event, propagate);
 
         int startY = 90;
 
@@ -207,7 +212,7 @@ public class BlacklistScreen extends Screen {
             int bx = width - 50;
 
             if (mouseX >= bx && mouseX <= bx + 20 && mouseY >= y && mouseY <= y + 20) {
-                ResourceLocation id = blacklistedItems.get(i);
+                Identifier id = blacklistedItems.get(i);
                 BuiltInRegistries.ITEM.getOptional(id)
                         .ifPresent(ItemphobiaConfig::removeFromBlacklist);
                 blacklistedItems = new ArrayList<>(ItemphobiaConfig.getBlacklistedItems());
@@ -215,7 +220,7 @@ public class BlacklistScreen extends Screen {
             }
         }
 
-        return super.mouseClicked(mouseX, mouseY, button);
+        return super.mouseClicked(event, propagate);
     }
 
     @Override
